@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Médico - Nuevo Bloque</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; 
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col items-center p-4 sm:p-8">
+
+    <div class="w-full max-w-3xl">
+        
+        <!-- Header / Contadores -->
+        <header class="flex flex-col sm:flex-row justify-between items-center bg-gray-800 p-4 rounded-xl shadow-lg mb-6 border border-gray-700">
+            <div class="mb-4 sm:mb-0">
+                <h1 class="text-xl font-bold text-blue-400">Cuestionario Multitemático</h1>
+                <p class="text-sm text-gray-400" id="question-counter">Pregunta 1 de 15</p>
+            </div>
+            
+            <div class="flex space-x-4">
+                <div class="flex items-center bg-gray-700 px-4 py-2 rounded-lg">
+                    <svg class="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span class="font-bold text-green-400" id="correct-counter">0</span>
+                    <span class="ml-1 text-sm text-gray-300">Aciertos</span>
+                </div>
+                <div class="flex items-center bg-gray-700 px-4 py-2 rounded-lg">
+                    <svg class="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <span class="font-bold text-red-400" id="incorrect-counter">0</span>
+                    <span class="ml-1 text-sm text-gray-300">Fallos</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenedor Principal del Quiz -->
+        <main id="quiz-container" class="bg-gray-800 p-6 sm:p-8 rounded-xl shadow-lg border border-gray-700 fade-in">
+            <h2 id="question-text" class="text-lg sm:text-xl font-medium mb-6 leading-relaxed">
+                Cargando pregunta...
+            </h2>
+            
+            <div id="options-container" class="space-y-3">
+                <!-- Las opciones se generan dinámicamente aquí -->
+            </div>
+
+            <div class="mt-8 flex justify-end">
+                <button id="next-btn" class="hidden bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-lg transition duration-200 shadow-md">
+                    Siguiente
+                </button>
+            </div>
+        </main>
+
+        <!-- Pantalla de Resultados (Oculta por defecto) -->
+        <section id="results-container" class="hidden bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-center fade-in">
+            <h2 class="text-3xl font-bold text-blue-400 mb-4">¡Cuestionario completado!</h2>
+            <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto mb-8">
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <p class="text-sm text-gray-400">Aciertos</p>
+                    <p class="text-3xl font-bold text-green-400" id="final-correct">0</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <p class="text-sm text-gray-400">Fallos</p>
+                    <p class="text-3xl font-bold text-red-400" id="final-incorrect">0</p>
+                </div>
+            </div>
+            <p id="final-message" class="text-lg mb-8 text-gray-300"></p>
+            <button onclick="restartQuiz()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg transition duration-200 shadow-md">
+                Volver a intentar
+            </button>
+        </section>
+
+    </div>
+
+    <script>
+        // Base de datos de preguntas
+        const questions = [
+            {
+                text: "1. Respecto a la dieta exenta de gluten:",
+                options: [
+                    "a. La supresión del gluten de la dieta subsana la intolerancia que presentan los afectados.",
+                    "b. Consigue el control de la enfermedad.",
+                    "c. Logra la recuperación de la mucosa intestinal, pero no normaliza la clínica del paciente.",
+                    "d. Sólo debe ser estricta hasta normalizar la mucosa intestinal."
+                ],
+                correct: 1 // b
+            },
+            {
+                text: "2. En la enfermedad celíaca, los falsos negativos se dan fundamentalmente por:",
+                options: [
+                    "a. Lesiones superficiales de la mucosa.",
+                    "b. Dieta previa sin gluten.",
+                    "c. Poca experiencia del patólogo.",
+                    "d. Lesiones no accesibles por endoscopía."
+                ],
+                correct: 1 // b
+            },
+            {
+                text: "3. Pauta de vacunación contra el virus de la hepatitis B en meses según calendario vacunal de Andalucía:",
+                options: [
+                    "a. 2, 4 y 11 meses.",
+                    "b. 0, 2 y 4 meses.",
+                    "c. 4, 6 y 11 meses.",
+                    "d. 0, 4 y 6 meses."
+                ],
+                correct: 0 // a (Hexavalente a los 2, 4 y 11 meses en el calendario andaluz actual)
+            },
+            {
+                text: "4. En relación a un paciente adulto diagnosticado de enteropatía por gluten, señale la respuesta incorrecta:",
+                options: [
+                    "a. Si cumple una dieta libre de gluten tendrá un 80% de posibilidades de mejoría clínica.",
+                    "b. Es necesario estudiar a sus hermanos pues la incidencia de la enfermedad en ellos es mayor que la de la población.",
+                    "c. Es aconsejable realizar la prueba de sobrecarga con gluten por vía oral para asegurar el diagnóstico.",
+                    "d. La determinación aislada de anticuerpos antigliadina y antiendomisio tiene mayor especificidad y sensibilidad que la determinación aislada de anticuerpos antitransglutaminasa tisular."
+                ],
+                correct: 2 // c (No se aconseja provocar daño intencionadamente si el diagnóstico ya está claro, la d también suele ser un distractor común, pero 'c' es la práctica clínica a evitar)
+            },
+            {
+                text: "5. Los anticuerpos antigliadina y antiendomisio son específicos de la enfermedad celíaca, especialmente si son de la clase:",
+                options: [
+                    "a. IgG.",
+                    "b. IgM.",
+                    "c. IgA.",
+                    "d. IgE."
+                ],
+                correct: 2 // c
+            },
+            {
+                text: "6. Mujer de 45 años, madre de un niño celíaco y sin síntomas ni signos de patología digestiva, es evaluada por anemia ferropénica detectada en analítica rutinaria. ¿Cuál de los siguientes enunciados es cierto respecto a este caso?",
+                options: [
+                    "a. El riesgo de esta mujer de padecer enfermedad celíaca es similar al de la población general.",
+                    "b. La ausencia de diarrea hace que se pueda excluir la enfermedad celíaca como causa de la anemia de esta paciente.",
+                    "c. La determinación del alelo HLA-DQ2, de resultar positiva, establecería el diagnóstico de enfermedad celíaca.",
+                    "d. La evaluación inicial debería incluir estudio genético y marcadores serológicos: la determinación de anticuerpos antiendomisio y/o antitransglutaminasa tisular."
+                ],
+                correct: 3 // d
+            },
+            {
+                text: "7. El estudio genético HLA… señale la incorrecta:",
+                options: [
+                    "a. Si positivo, no permite diagnosticar la EC.",
+                    "b. Si positivo no es motivo para prescribir DSG.",
+                    "c. Si negativo descarta la EC casi en su totalidad.",
+                    "d. Si negativo requiere de biopsia complementaria."
+                ],
+                correct: 3 // d (El valor predictivo negativo es casi del 100%, por lo que un HLA negativo descarta la celiaquía sin necesidad de más biopsias para confirmarlo)
+            },
+            {
+                text: "8. Define APPCC:",
+                options: [
+                    "a. Análisis de partes de productos con control celiaco.",
+                    "b. Análisis de producto y control de puntos críticos.",
+                    "c. Análisis de partes de producto por centímetro cúbico.",
+                    "d. Análisis de productos proteicos y control crítico."
+                ],
+                correct: 1 // b (Análisis de Peligros/Productos y Puntos de Control Crítico)
+            },
+            {
+                text: "9. Trazabilidad es la….",
+                options: [
+                    "a. Capacidad para seguir el proceso de manipulación de los alimentos en su fabricación.",
+                    "b. Capacidad de seguir los productos elaborados tras su distribución.",
+                    "c. Capacidad para seguir el movimiento de un alimento a través de etapas especificadas de la producción, transformación y distribución.",
+                    "d. Capacidad para seguir el movimiento de los alimentos sin gluten a través de las etapas de producción, transformación y distribución."
+                ],
+                correct: 2 // c
+            },
+            {
+                text: "10. Respecto a la alteración del metabolismo de la bilirrubina (bb)… señale la respuesta correcta:",
+                options: [
+                    "a. Aparece ictericia si en sangre la bb plasmática es superior a 2 g/100 ml.",
+                    "b. Cada día se producen entre 250-350 mg de bb.",
+                    "c. El 80% de la bb producida procede de la destrucción de hematíes.",
+                    "d. El 20% de la bb producida procede de una eritropoyesis ineficaz."
+                ],
+                correct: 2 // c (El 80-85% procede de la degradación de hemoglobina de eritrocitos senescentes)
+            },
+            {
+                text: "11. En cuanto a alteraciones de la refracción, señale la correcta:",
+                options: [
+                    "a. Hipermetropía es la convergencia de los rayos luminosos delante de la retina.",
+                    "b. El astigmatismo es el cuadro en el cual los rayos luminosos paralelos se concentran en un punto a causa de las irregularidades de la superficie de la córnea.",
+                    "c. La presbicia está causada en el 90% de los casos por una catarata senil.",
+                    "d. Miopía es la convergencia de los rayos luminosos detrás de la retina."
+                ],
+                correct: 1 // b (Nota: Normalmente en astigmatismo los rayos NO se concentran en un solo punto, pero asumiendo posibles erratas de transcripción, las otras 3 son diametralmente falsas en concepto básico).
+            },
+            {
+                text: "12. Los destellos, descritos por los enfermos como luces que relampaguean o centellean en el campo visual y las moscas volantes, son síntomas que podrían asociarse a:",
+                options: [
+                    "a. Desprendimiento de retina.",
+                    "b. Catarata senil.",
+                    "c. Degeneración macular exudativa.",
+                    "d. Ninguna de las anteriores."
+                ],
+                correct: 0 // a (Fotopsias y miodesopsias son clásicas del desprendimiento)
+            },
+            {
+                text: "13. Señale la correcta con respecto a las cataratas:",
+                options: [
+                    "a. La edad es el factor de riesgo principal de las cataratas.",
+                    "b. Un traumatismo ocular puede precipitar la formación de cataratas.",
+                    "c. La diabetes mellitus está asociada al desarrollo de las cataratas.",
+                    "d. Todas son correctas."
+                ],
+                correct: 3 // d
+            },
+            {
+                text: "14. En relación a la torsión intravaginal testicular indique la respuesta correcta:",
+                options: [
+                    "a. Es una afección aguda propia de la edad inmediatamente postpuberal, probablemente con el rápido crecimiento del testículo y su aumento de peso.",
+                    "b. La semiología aguda se inicia por un dolor extraescrotal intenso, de aparición súbita, que suele irradiarse a menudo a la ingle y/o al epigastrio, con frecuencia acompañado de náuseas e incluso vómitos. El paciente generalmente no tiene fiebre, ni tampoco presenta semiología urinaria.",
+                    "c. La exploración física demuestra que el testículo de la bolsa escrotal en la que se localiza el dolor está aumentado de volumen y es anormalmente sensible a la palpación. La piel escrotal suele estar edematosa, eritematosa…",
+                    "d. Todas las respuestas son correctas."
+                ],
+                correct: 2 // c
+            },
+            {
+                text: "15. La ausencia de cristalino se denomina:",
+                options: [
+                    "a. Astigmatismo.",
+                    "b. Presbicia.",
+                    "c. Afaquia.",
+                    "d. Ametropía."
+                ],
+                correct: 2 // c
+            }
+        ];
+
+        // Estado del Quiz
+        let currentQuestionIndex = 0;
+        let correctAnswers = 0;
+        let incorrectAnswers = 0;
+        let hasAnswered = false;
+
+        // Referencias del DOM
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const questionCounter = document.getElementById('question-counter');
+        const correctCounter = document.getElementById('correct-counter');
+        const incorrectCounter = document.getElementById('incorrect-counter');
+        const quizContainer = document.getElementById('quiz-container');
+        const resultsContainer = document.getElementById('results-container');
+
+        // Inicializar el Quiz
+        function loadQuestion() {
+            hasAnswered = false;
+            nextBtn.classList.add('hidden');
+            
+            const currentQuestion = questions[currentQuestionIndex];
+            
+            // Actualizar contadores superiores
+            questionCounter.innerText = `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`;
+            
+            // Renderizar pregunta
+            questionText.innerText = currentQuestion.text;
+            
+            // Limpiar y renderizar opciones
+            optionsContainer.innerHTML = '';
+            
+            currentQuestion.options.forEach((optionText, index) => {
+                const button = document.createElement('button');
+                button.className = 'w-full text-left p-4 rounded-lg bg-gray-700 hover:bg-gray-600 border border-gray-600 transition duration-150 ease-in-out focus:outline-none';
+                button.innerText = optionText;
+                button.onclick = () => selectOption(index, button);
+                optionsContainer.appendChild(button);
+            });
+
+            // Animación de aparición
+            quizContainer.classList.remove('fade-in');
+            void quizContainer.offsetWidth; // Trigger reflow
+            quizContainer.classList.add('fade-in');
+        }
+
+        // Manejar la selección de una respuesta
+        function selectOption(selectedIndex, selectedButton) {
+            if (hasAnswered) return; // Evitar que responda dos veces
+            hasAnswered = true;
+
+            const currentQuestion = questions[currentQuestionIndex];
+            const isCorrect = selectedIndex === currentQuestion.correct;
+            const allButtons = optionsContainer.querySelectorAll('button');
+
+            // Deshabilitar todos los botones
+            allButtons.forEach(btn => {
+                btn.classList.remove('hover:bg-gray-600', 'cursor-pointer');
+                btn.classList.add('cursor-default', 'opacity-70');
+            });
+
+            if (isCorrect) {
+                // Respuesta correcta
+                selectedButton.classList.remove('bg-gray-700', 'border-gray-600');
+                selectedButton.classList.add('bg-green-900', 'border-green-500', 'text-green-100', 'opacity-100');
+                correctAnswers++;
+                correctCounter.innerText = correctAnswers;
+            } else {
+                // Respuesta incorrecta
+                selectedButton.classList.remove('bg-gray-700', 'border-gray-600');
+                selectedButton.classList.add('bg-red-900', 'border-red-500', 'text-red-100', 'opacity-100');
+                incorrectAnswers++;
+                incorrectCounter.innerText = incorrectAnswers;
+
+                // Resaltar la correcta para que aprenda
+                const correctButton = allButtons[currentQuestion.correct];
+                correctButton.classList.remove('bg-gray-700', 'border-gray-600');
+                correctButton.classList.add('bg-green-900', 'border-green-500', 'text-green-100', 'opacity-100');
+            }
+
+            // Mostrar el botón de siguiente
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.innerText = 'Ver Resultados';
+            } else {
+                nextBtn.innerText = 'Siguiente';
+            }
+            nextBtn.classList.remove('hidden');
+        }
+
+        // Ir a la siguiente pregunta o finalizar
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        });
+
+        // Pantalla de finalización
+        function showResults() {
+            quizContainer.classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
+            
+            document.getElementById('final-correct').innerText = correctAnswers;
+            document.getElementById('final-incorrect').innerText = incorrectAnswers;
+
+            const percentage = (correctAnswers / questions.length) * 100;
+            const messageEl = document.getElementById('final-message');
+            
+            if (percentage === 100) {
+                messageEl.innerText = "¡Excelente! Has acertado todas las preguntas.";
+            } else if (percentage >= 70) {
+                messageEl.innerText = "¡Muy buen trabajo! Tienes un gran conocimiento sobre la materia.";
+            } else if (percentage >= 50) {
+                messageEl.innerText = "Has aprobado, pero hay margen de mejora. ¡Sigue repasando!";
+            } else {
+                messageEl.innerText = "Te recomendamos volver a estudiar estos conceptos e intentarlo de nuevo.";
+            }
+        }
+
+        // Reiniciar
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            correctAnswers = 0;
+            incorrectAnswers = 0;
+            correctCounter.innerText = "0";
+            incorrectCounter.innerText = "0";
+            
+            resultsContainer.classList.add('hidden');
+            quizContainer.classList.remove('hidden');
+            
+            loadQuestion();
+        }
+
+        // Iniciar la primera pregunta al cargar
+        loadQuestion();
+
+    </script>
+</body>
+</html>
